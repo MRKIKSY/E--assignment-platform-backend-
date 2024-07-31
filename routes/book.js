@@ -1,65 +1,79 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import express from 'express';
+import { Book } from '../models/Book.js';
+const router = express.Router();
+import { verifyAdmin } from './auth.js';
 
-const AddBook = () => {
-  const [name, setName] = useState('');
-  const [author, setAuthor] = useState('');
-  const navigate = useNavigate();
+// Add a new book (Admin only)
+router.post('/add', verifyAdmin, async (req, res) => {
+    try {
+        const { name, author, imageUrl } = req.body;
+        const newBook = new Book({
+            name,
+            author,
+            imageUrl
+        });
+        await newBook.save();
+        return res.status(201).json({ added: true });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error in adding book" });
+    }
+});
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token'); // Retrieve the token from localStorage
-    axios.post('https://e-assignment-platform-backend.onrender.com/book/add', { name, author }, {
-      headers: {
-        'Authorization': `Bearer ${token}` // Include token in headers
-      }
-    })
-    .then(res => {
-      if (res.data.added) {
-        navigate('/books');
-      } else {
-        console.log(res.data.message);
-      }
-    })
-    .catch(err => console.log(err));
-  };
+// Get all books
+router.get('/books', async (req, res) => {
+    try {
+        const books = await Book.find();
+        return res.status(200).json(books);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error fetching books" });
+    }
+});
 
-  return (
-    <div className="student-form-container">
-      <form className="student-form" onSubmit={handleSubmit}>
-        <h2>Add Book</h2>
-        <div className="form-group">
-          <label htmlFor="book">Book Name:</label>
-          <input
-            type="text"
-            id="book"
-            name="book"
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="author">Author Name:</label>
-          <input
-            type="text"
-            id="author"
-            name="author"
-            onChange={(e) => setAuthor(e.target.value)}
-          />
-        </div>
-        {/* <div className="form-group">
-          <label htmlFor="image">Image URL:</label>
-          <input
-            type="text"
-            id="image"
-            name="image"
-            onChange={(e) => setImageUrl(e.target.value)}
-          />
-        </div> */}
-        <button type="submit">Add</button>
-      </form>
-    </div>
-  );
-};
+// Get a specific book by ID
+router.get('/book/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const book = await Book.findById(id);
+        if (!book) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+        return res.status(200).json(book);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error fetching book" });
+    }
+});
 
-export default AddBook;
+// Update a specific book by ID
+router.put('/book/:id', verifyAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const updatedBook = await Book.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updatedBook) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+        return res.status(200).json({ updated: true, book: updatedBook });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error updating book" });
+    }
+});
+
+// Delete a specific book by ID
+router.delete('/book/:id', verifyAdmin, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const deletedBook = await Book.findByIdAndDelete(id);
+        if (!deletedBook) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+        return res.status(200).json({ deleted: true, book: deletedBook });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Error deleting book" });
+    }
+});
+
+export { router as bookRouter };
