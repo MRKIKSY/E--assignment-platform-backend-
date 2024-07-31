@@ -1,3 +1,4 @@
+// studentRouter.js
 import express from 'express';
 import { Student } from '../models/Student.js';
 import bcrypt from 'bcryptjs';
@@ -7,11 +8,13 @@ const router = express.Router();
 
 router.post('/register', verifyAdmin, async (req, res) => {
     try {
+        console.log("Request body:", req.body); // Log request body
         const { username, password, roll, grade } = req.body;
 
         // Check if student already exists
         const student = await Student.findOne({ username });
         if (student) {
+            console.log("Student already exists:", student);
             return res.json({ message: "Student is already registered" });
         }
 
@@ -28,6 +31,7 @@ router.post('/register', verifyAdmin, async (req, res) => {
 
         // Save to database
         await newStudent.save();
+        console.log("Student registered successfully");
         return res.json({ registered: true });
     } catch (err) {
         console.error("Error in registering student:", err); // Improved error logging

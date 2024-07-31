@@ -46,18 +46,23 @@ router.post('/login', async (req, res) => {
 const verifyAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    return res.status(403).json({ message: "Authorization header missing" });
+      console.log("Authorization header missing");
+      return res.status(403).json({ message: "Authorization header missing" });
   }
+
   const token = authHeader.split(' ')[1];
   jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid token" });
-    }
-    req.username = decoded.username;
-    req.role = decoded.role;
-    next();
+      if (err) {
+          console.log("Token verification failed:", err);
+          return res.status(403).json({ message: "Invalid token" });
+      }
+
+      req.username = decoded.username;
+      req.role = decoded.role;
+      next();
   });
 };
+
 
 // Verify user middleware
 const verifyUser = (req, res, next) => {
