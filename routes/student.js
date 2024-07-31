@@ -1,29 +1,38 @@
-import express from 'express'
+import express from 'express';
 import { Student } from '../models/Student.js';
 import bcrypt from 'bcryptjs';
-import { verifyAdmin } from './auth.js';
+import { verifyAdmin } from '../routes/auth.js'; // Ensure this middleware is properly implemented
+
 const router = express.Router();
 
-
-router.post('/register',verifyAdmin, async (req, res) => {
+router.post('/register', verifyAdmin, async (req, res) => {
     try {
-        const {username, password, roll, grade} = req.body;
-        const student = await Student.findOne({username})
-        if(student) {
-            return res.json({message: "student is registered"})
+        const { username, password, roll, grade } = req.body;
+
+        // Check if student already exists
+        const student = await Student.findOne({ username });
+        if (student) {
+            return res.json({ message: "Student is already registered" });
         }
-        const hashPassword = await bcrypt.hash(password, 10)
-        const newstudent = new Student({
+
+        // Hash the password
+        const hashPassword = await bcrypt.hash(password, 10);
+
+        // Create new student
+        const newStudent = new Student({
             username,
             password: hashPassword,
-            roll: roll,
+            roll,
             grade
-        })
-        await newstudent.save()
-        return res.json({registered: true})
-    } catch(err) {
-        return res.json({message: "Error in registring student"})
-    }
-})
+        });
 
-export {router as studentRouter}
+        // Save to database
+        await newStudent.save();
+        return res.json({ registered: true });
+    } catch (err) {
+        console.error("Error in registering student:", err); // Improved error logging
+        return res.status(500).json({ message: "Error in registering student" });
+    }
+});
+
+export { router as studentRouter };
