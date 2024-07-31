@@ -21,7 +21,8 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: "Wrong password" });
       }
       const token = jwt.sign({ username: admin.username, role: 'admin' }, process.env.Admin_Key, { expiresIn: '1h' });
-      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
+      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'None' });
+
       return res.json({ login: true, role: 'admin' });
     } else if (role === 'student') {
       const student = await Student.findOne({ username });

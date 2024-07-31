@@ -19,11 +19,15 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(cors({
-    origin: ["https://e-assignment-platform.onrender.com",
-     "https://e-assignment-platform-backend.onrender.com","http://localhost:5173","http://localhost:3001"],
+    origin: [
+        "https://e-assignment-platform.onrender.com",
+        "https://e-assignment-platform-backend.onrender.com",
+        
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
+
 
 app.use(cookieParser());
 dotenv.config();
