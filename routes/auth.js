@@ -21,9 +21,7 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: "Wrong password" });
       }
       const token = jwt.sign({ username: admin.username, role: 'admin' }, process.env.Admin_Key, { expiresIn: '1h' });
-      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'None' });
-
-      return res.json({ login: true, role: 'admin' });
+      return res.json({ login: true, role: 'admin', token });
     } else if (role === 'student') {
       const student = await Student.findOne({ username });
       if (!student) {
@@ -34,8 +32,7 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ message: "Wrong password" });
       }
       const token = jwt.sign({ username: student.username, role: 'student' }, process.env.Student_Key, { expiresIn: '1h' });
-      res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'Strict' });
-      return res.json({ login: true, role: 'student' });
+      return res.json({ login: true, role: 'student', token });
     } else {
       return res.status(400).json({ message: "Invalid role" });
     }
@@ -47,46 +44,44 @@ router.post('/login', async (req, res) => {
 
 // Verify admin middleware
 const verifyAdmin = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(403).json({ message: "Invalid Admin" });
-  } else {
-    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-      if (err) {
-        return res.status(403).json({ message: "Invalid token" });
-      } else {
-        req.username = decoded.username;
-        req.role = decoded.role;
-        next();
-      }
-    });
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(403).json({ message: "Authorization header missing" });
   }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid token" });
+    }
+    req.username = decoded.username;
+    req.role = decoded.role;
+    next();
+  });
 };
 
 // Verify user middleware
 const verifyUser = (req, res, next) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(403).json({ message: "Invalid User" });
-  } else {
-    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-      if (err) {
-        jwt.verify(token, process.env.Student_Key, (err, decoded) => {
-          if (err) {
-            return res.status(403).json({ message: "Invalid token" });
-          } else {
-            req.username = decoded.username;
-            req.role = decoded.role;
-            next();
-          }
-        });
-      } else {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(403).json({ message: "Authorization header missing" });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+    if (err) {
+      jwt.verify(token, process.env.Student_Key, (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ message: "Invalid token" });
+        }
         req.username = decoded.username;
         req.role = decoded.role;
         next();
-      }
-    });
-  }
+      });
+    } else {
+      req.username = decoded.username;
+      req.role = decoded.role;
+      next();
+    }
+  });
 };
 
 // Verify route
@@ -96,7 +91,7 @@ router.get('/verify', verifyUser, (req, res) => {
 
 // Logout route
 router.get('/logout', (req, res) => {
-  res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'Strict' });
+  // Clear the token from client-side storage
   return res.json({ logout: true });
 });
 
