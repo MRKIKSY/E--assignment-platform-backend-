@@ -22,22 +22,25 @@ app.use(cors({
     origin: [
         "https://e-assignment-platform.onrender.com",
         "https://e-assignment-platform-backend.onrender.com",
-        
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
 
-
 app.use(cookieParser());
 dotenv.config();
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from the React app's build directory
+app.use(express.static(path.join(__dirname, '../client/build')));
 
 app.use('/auth', AdminRouter);
 app.use('/student', studentRouter);
 app.use('/book', bookRouter);
+
+// Serve the React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+});
 
 app.get('/dashboard', async (req, res) => {
     try {
@@ -51,5 +54,5 @@ app.get('/dashboard', async (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-    console.log("Server is Running");
+    console.log(`Server is running on port ${process.env.PORT}`);
 });
