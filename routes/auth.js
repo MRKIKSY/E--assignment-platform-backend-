@@ -38,14 +38,16 @@ router.post('/login', async (req, res) => {
     }
 });
 
+c
 const verifyAdmin = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.json({ message: "No token provided" });
+        return res.status(401).json({ message: "No token provided" }); // Changed to status 401 (Unauthorized)
     }
+
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
-            return res.json({ message: "Invalid token" });
+            return res.status(401).json({ message: "Invalid token" }); // Changed to status 401 (Unauthorized)
         }
         req.username = decoded.username;
         req.role = decoded.role;
@@ -56,13 +58,14 @@ const verifyAdmin = (req, res, next) => {
 const verifyUser = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.json({ message: "No token provided" });
+        return res.status(401).json({ message: "No token provided" }); // Changed to status 401 (Unauthorized)
     }
+
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
             jwt.verify(token, process.env.Student_Key, (err, decoded) => {
                 if (err) {
-                    return res.json({ message: "Invalid token" });
+                    return res.status(401).json({ message: "Invalid token" }); // Changed to status 401 (Unauthorized)
                 }
                 req.username = decoded.username;
                 req.role = decoded.role;
