@@ -57,14 +57,20 @@ const verifyAdmin = (req, res, next) => {
 const verifyUser = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.status(401).json({ message: "No token provided" }); // Changed to status 401 (Unauthorized)
+        return res.status(401).json({ message: "No token provided" });
     }
 
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
+            // Log for debugging
+            console.error("Admin Key verification failed:", err);
+
+            // Try student key
             jwt.verify(token, process.env.Student_Key, (err, decoded) => {
                 if (err) {
-                    return res.status(401).json({ message: "Invalid token" }); // Changed to status 401 (Unauthorized)
+                    // Log for debugging
+                    console.error("Student Key verification failed:", err);
+                    return res.status(401).json({ message: "Invalid token" });
                 }
                 req.username = decoded.username;
                 req.role = decoded.role;
@@ -77,6 +83,7 @@ const verifyUser = (req, res, next) => {
         }
     });
 };
+
 
 router.get('/verify', verifyUser, (req, res) => {
     return res.json({ login: true, role: req.role });
