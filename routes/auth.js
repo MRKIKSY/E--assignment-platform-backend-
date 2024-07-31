@@ -42,42 +42,38 @@ const verifyAdmin = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
         return res.json({ message: "No token provided" });
-    } else {
-        jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-            if (err) {
-                return res.json({ message: "Invalid token" });
-            } else {
-                req.username = decoded.username;
-                req.role = decoded.role;
-                next();
-            }
-        });
     }
+    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+        if (err) {
+            return res.json({ message: "Invalid token" });
+        }
+        req.username = decoded.username;
+        req.role = decoded.role;
+        next();
+    });
 };
 
 const verifyUser = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
         return res.json({ message: "No token provided" });
-    } else {
-        jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
-            if (err) {
-                jwt.verify(token, process.env.Student_Key, (err, decoded) => {
-                    if (err) {
-                        return res.json({ message: "Invalid token" });
-                    } else {
-                        req.username = decoded.username;
-                        req.role = decoded.role;
-                        next();
-                    }
-                });
-            } else {
+    }
+    jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+        if (err) {
+            jwt.verify(token, process.env.Student_Key, (err, decoded) => {
+                if (err) {
+                    return res.json({ message: "Invalid token" });
+                }
                 req.username = decoded.username;
                 req.role = decoded.role;
                 next();
-            }
-        });
-    }
+            });
+        } else {
+            req.username = decoded.username;
+            req.role = decoded.role;
+            next();
+        }
+    });
 };
 
 router.get('/verify', verifyUser, (req, res) => {
@@ -89,4 +85,4 @@ router.get('/logout', (req, res) => {
     return res.json({ logout: true });
 });
 
-export { router as AdminRouter, verifyAdmin, verifyUser };  // Ensure verifyAdmin is exported
+export { router as AdminRouter, verifyAdmin, verifyUser };
