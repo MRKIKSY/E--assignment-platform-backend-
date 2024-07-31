@@ -20,16 +20,16 @@ router.post('/login', async (req, res) => {
         }
 
         if (!user) {
-            return res.json({ message: `${role} not registered` });
+            return res.status(401).json({ message: `${role} not registered` });
         }
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
-            return res.json({ message: "Wrong password" });
+            return res.status(401).json({ message: "Wrong password" });
         }
 
-        const token = jwt.sign({ username: user.username, role }, secretKey);
-        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+        const token = jwt.sign({ username: user.username, role }, secretKey, { expiresIn: '1h' });
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'Strict' });
 
         return res.json({ login: true, role });
     } catch (err) {
@@ -41,12 +41,12 @@ router.post('/login', async (req, res) => {
 const verifyAdmin = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.status(401).json({ message: "No token provided" }); // Changed to status 401 (Unauthorized)
+        return res.status(401).json({ message: "No token provided" });
     }
 
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
-            return res.status(401).json({ message: "Invalid token" }); // Changed to status 401 (Unauthorized)
+            return res.status(401).json({ message: "Invalid token" });
         }
         req.username = decoded.username;
         req.role = decoded.role;
@@ -62,14 +62,8 @@ const verifyUser = (req, res, next) => {
 
     jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
-            // Log for debugging
-            console.error("Admin Key verification failed:", err);
-
-            // Try student key
             jwt.verify(token, process.env.Student_Key, (err, decoded) => {
                 if (err) {
-                    // Log for debugging
-                    console.error("Student Key verification failed:", err);
                     return res.status(401).json({ message: "Invalid token" });
                 }
                 req.username = decoded.username;
@@ -83,7 +77,6 @@ const verifyUser = (req, res, next) => {
         }
     });
 };
-
 
 router.get('/verify', verifyUser, (req, res) => {
     return res.json({ login: true, role: req.role });
