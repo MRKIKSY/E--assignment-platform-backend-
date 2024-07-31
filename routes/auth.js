@@ -2,7 +2,8 @@ import express from 'express'
 import { Admin } from '../models/Admin.js';
 import { Student } from '../models/Student.js';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs';
+
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
