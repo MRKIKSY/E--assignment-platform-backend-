@@ -66,9 +66,9 @@ const verifyUser = (req, res, next) => {
     return res.status(403).json({ message: "Authorization header missing" });
   }
   const token = authHeader.split(' ')[1];
-  jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+  jwt.verify(token, process.env.Student_Key, (err, decoded) => {
     if (err) {
-      jwt.verify(token, process.env.Student_Key, (err, decoded) => {
+      jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
         if (err) {
           return res.status(403).json({ message: "Invalid token" });
         }
