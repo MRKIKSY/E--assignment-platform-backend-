@@ -38,7 +38,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-c
 const verifyAdmin = (req, res, next) => {
     const token = req.cookies.token;
     if (!token) {
