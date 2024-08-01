@@ -29,6 +29,7 @@ app.use(cors({
     credentials: true
 }));
 
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -41,12 +42,23 @@ const verifyToken = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(403).json({ message: 'No token provided' });
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) return res.status(403).json({ message: 'Invalid token' });
-        req.user = decoded;
-        next();
+    // First, try to verify with the Student_Key
+    jwt.verify(token, process.env.Student_Key, (err, decoded) => {
+        if (err) {
+            // If verification with Student_Key fails, try Admin_Key
+            jwt.verify(token, process.env.Admin_Key, (err, decoded) => {
+                if (err) return res.status(403).json({ message: 'Invalid token' });
+
+                req.user = decoded;
+                next();
+            });
+        } else {
+            req.user = decoded;
+            next();
+        }
     });
 };
+
 
 app.post('/book/add', verifyToken, async (req, res) => {
     const { name, author } = req.body;
