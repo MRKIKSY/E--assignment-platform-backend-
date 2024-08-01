@@ -44,7 +44,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Verify admin middleware
 const verifyAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -57,6 +56,11 @@ const verifyAdmin = (req, res, next) => {
       if (err) {
           console.log("Token verification failed:", err);
           return res.status(403).json({ message: "Invalid token" });
+      }
+
+      if (decoded.role !== 'admin') {
+          console.log("Access denied: Insufficient privileges");
+          return res.status(403).json({ message: "Access denied: Insufficient privileges" });
       }
 
       req.username = decoded.username;
